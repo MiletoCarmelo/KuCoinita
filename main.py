@@ -31,4 +31,5 @@ def flow_kucoin_candlesticks_daily(mode=mode,type=type,from_date_str=from_date_s
     # pg.export_to_pg(table_name,data,overwrite="append")
     print(data)
 
-flow_kucoin_candlesticks_daily()
+if __name__ == "__main__":
+    flow_kucoin_candlesticks_daily()
