@@ -3,7 +3,6 @@ from src import pg as pg
 from datetime import datetime, timedelta
 import prefect as pf
 
-tickers = ku.get_tickers_list()
 mode = "update"
 type = "1day"
 table_name = "kucoin_candlesticks_daily"
@@ -32,4 +31,4 @@ def flow_kucoin_candlesticks_daily(mode=mode,type=type,from_date_str=from_date_s
     # pg.export_to_pg(table_name,data,overwrite="append")
     print(data)
 
-#flow_kucoin_candlesticks_daily()
+flow_kucoin_candlesticks_daily()
