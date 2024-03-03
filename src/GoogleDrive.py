@@ -6,6 +6,7 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.http import MediaIoBaseDownload
 import pandas as pd
+import prefect as pf
 
 
 # Define the Google Drive API scopes and service account file path
@@ -111,6 +112,7 @@ def delete_folder(folder_name):
     except HttpError as error:
         print(f'An error occurred: {error}')
 
+@pf.task(name="[gdrive] uppload")
 def upload_file(file_path, folder_parent_id):
     try:
         file_metadata = {
