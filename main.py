@@ -20,6 +20,9 @@ def flow_kucoin_candlesticks_daily(mode=mode,type=type,from_date_str=from_date_s
     # get ticker list 
     tickers = ku.get_tickers_list()
     tickers = tickers["symbol"].to_list()
+    # for test purpose take only the first 10 tickers 
+    tickers = tickers[:10]
+    print(len(tickers))
     # request candlesticks
     if mode != "update":
         from_date_str="2022-01-01"

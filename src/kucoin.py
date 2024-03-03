@@ -83,7 +83,7 @@ async def _daily_volume_task(tickers, type="1day", from_date=from_date_str, to_d
     tasks = [_daily_volume(ticker, type, from_date, to_date) for ticker in tickers]
     return await asyncio.gather(*tasks)
 
-#@pf.task(name="[API] get candelsticks")
+@pf.task(name="[API] get candelsticks")
 def get_daily_candlesticks(tickers = ["BTC-USDT", "ETH-USDT"],type="1day", from_date=from_date_str, to_date=to_date_str): 
     # apply nest_asyncio to allow nestedd use of asyncio0s event loop: 
     nest_asyncio.apply()
@@ -109,7 +109,7 @@ def get_daily_candlesticks_no_async(tickers = ["BTC-USDT", "ETH-USDT"],type="1da
 #### request for symbol list  ##############################################################################################################
 ############################################################################################################################################
 
-
+@pf.task(name="[kucoin] get tickers list")
 def get_tickers_list(quotCurrency=None, enableTrading=True): 
     req = "https://api.kucoin.com/api/v2/symbols"
     response = requests.get(req)
