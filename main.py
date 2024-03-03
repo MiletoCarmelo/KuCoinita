@@ -32,7 +32,7 @@ def flow_kucoin_candlesticks_daily(mode=mode,type=type,from_date_str=from_date_s
     # pg.export_to_pg(table_name,data,overwrite="append")
     file_name = "kucoin_candlesticks_" + datetime.today().strftime("%Y%m%d_%H%M%S") + ".xlsx"
     # export to xslx 
-    xs.export_toxlsx("./" + file_name, data)
+    xs.export_toxlsx(data, "./" + file_name)
     # push to google drive : 
     id = gd.upload_file( file_path= "./" + file_name, folder_parent_id='1iTMazQALR7EgoRuxp-T3yTMXNWMUgGHX')
 
