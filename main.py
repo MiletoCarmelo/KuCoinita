@@ -30,6 +30,6 @@ def flow_kucoin_candlesticks_daily(mode=mode,type=type,from_date_str=from_date_s
     data = ku.get_daily_candlesticks(tickers=tickers, type=type, from_date=from_date_str, to_date=to_date_str)
     # export data : 
     # pg.export_to_pg(table_name,data,overwrite="append")
-    print(flow_kucoin_candlesticks_daily)
+    print(data)
 
 #flow_kucoin_candlesticks_daily()
