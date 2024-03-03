@@ -16,6 +16,12 @@ plotly = "^5.18.0"
 nbformat = "^5.9.2"
 google = "^3.0.0"
 google-api-python-client = "^2.116.0"
+python-dotenv = "^1.0.1"
+black = "^24.2.0"
+nest-asyncio = "^1.6.0"
+asyncio = "^3.4.3"
+sqlalchemy = "^2.0.27"
+tqdm = "^4.66.2"
 
 
 [build-system]
