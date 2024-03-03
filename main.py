@@ -13,9 +13,9 @@ today = datetime.now().date()
 yesterday = datetime.now().date() - timedelta(days=10)
 # Convert to string
 to_date_str = today.strftime("%Y-%m-%d")
-from_date_str = yesterday
+from_date_str = yesterday.strftime("%Y-%m-%d")
 
-#@pf.flow(name = "Kucoin CandleSticks", log_prints=True, flow_run_name="kucoin_candlesticks_" + datetime.today().strftime("%Y%m%d_%H%M%S"))
+@pf.flow(name = "Kucoin CandleSticks", log_prints=True, flow_run_name="kucoin_candlesticks_" + datetime.today().strftime("%Y%m%d_%H%M%S"))
 def flow_kucoin_candlesticks_daily(mode=mode,type=type,from_date_str=from_date_str, to_date_str=to_date_str,table_name=table_name):
     # get ticker list 
     tickers = ku.get_tickers_list()
