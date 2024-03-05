@@ -40,6 +40,7 @@ def flow_kucoin_candlesticks_daily(mode=mode,type=type,from_date_str=from_date_s
     xs.export_toxlsx(data, "./" + file_name)
     # push to google drive : 
     id = gd.upload_file( file_path= "./" + file_name, folder_parent_id='1iTMazQALR7EgoRuxp-T3yTMXNWMUgGHX')
-
+    print(data.head())
+    
 if __name__ == "__main__":
     flow_kucoin_candlesticks_daily()
