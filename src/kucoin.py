@@ -4,7 +4,7 @@ import pandas as pd
 import nest_asyncio
 import asyncio
 import prefect as pf
-from tqdm import tqdm
+from tqdm.asyncio import tqdm
 
 
 # get date of today :
@@ -78,12 +78,20 @@ async def _daily_volume(ticker="BTC-USDT", type="1day", from_date=from_date_str,
     else:
         print('Request failed with status code', response.status_code)
 
-
 async def _daily_volume_task(tickers, type="1day", from_date=from_date_str, to_date=to_date_str):
-    tasks = [_daily_volume(ticker, type, from_date, to_date) for ticker in tickers]
-    return await asyncio.gather(*tasks)
+    pbar = tqdm(total=len(tickers), position=0, ncols=90)  # Set total to the number of tasks
+    async def task_wrapper(ticker):
+        result = await _daily_volume(ticker, type, from_date, to_date)
+        pbar.update()  # Update the progress bar
+        return result
+    tasks = [task_wrapper(ticker[1]) for ticker in enumerate(tickers)]
+    results = await asyncio.gather(*tasks)
+    pbar.close()  # Close the progress bar when done
+    return pd.concat(results)
+        
+    # return await asyncio.gather(*tasks)
 
-@pf.task(name="[API] get candelsticks")
+#@pf.task(name="[API] get candelsticks")
 def get_daily_candlesticks(tickers = ["BTC-USDT", "ETH-USDT"],type="1day", from_date=from_date_str, to_date=to_date_str): 
     # apply nest_asyncio to allow nestedd use of asyncio0s event loop: 
     nest_asyncio.apply()
@@ -92,7 +100,7 @@ def get_daily_candlesticks(tickers = ["BTC-USDT", "ETH-USDT"],type="1day", from_
     # get all responses : 
     data = loop.run_until_complete(_daily_volume_task(tickers, type, from_date, to_date))
     # data concat : 
-    return pd.concat(data)
+    return data
 
 
 def get_daily_candlesticks_no_async(tickers = ["BTC-USDT", "ETH-USDT"],type="1day", from_date=from_date_str, to_date=to_date_str): 
@@ -102,14 +110,14 @@ def get_daily_candlesticks_no_async(tickers = ["BTC-USDT", "ETH-USDT"],type="1da
         data = _daily_volume_no_async(tickers[i], type, from_date, to_date)
         data_all = pd.concat([data_all, data])
     # data concat : 
-    return pd.concat(data)
+    return data_all
 
 
 ############################################################################################################################################
 #### request for symbol list  ##############################################################################################################
 ############################################################################################################################################
 
-@pf.task(name="[kucoin] get tickers list")
+
 def get_tickers_list(quotCurrency=None, enableTrading=True): 
     req = "https://api.kucoin.com/api/v2/symbols"
     response = requests.get(req)
