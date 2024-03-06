@@ -54,7 +54,7 @@ def list_folder(parent_folder_id=None):
         for item in items:
             print(f"Name: {item['name']}, ID: {item['id']}, Type: {item['mimeType']}")
 
-def list_files(parent_folder_id=None):
+def list_files(parent_folder_id=None, _print=False):
     """List folders and files in Google Drive."""
     results = drive_service.files().list(
         q=f"'{parent_folder_id}' in parents and trashed=false" if parent_folder_id else None,
@@ -62,12 +62,13 @@ def list_files(parent_folder_id=None):
         fields="nextPageToken, files(id, name, mimeType, modifiedTime)"
     ).execute()
     items = results.get('files', [])
-    if not items:
-        print("No folders or files found in Google Drive.")
-    else:
-        print("Folders and files in Google Drive:")
-        for item in items:
-            print(f"Name: {item['name']}, ID: {item['id']}, Type: {item['mimeType']}, Modified Time: {item['modifiedTime']}")
+    if _print:
+        if not items:
+            print("No folders or files found in Google Drive.")
+        else:
+            print("Folders and files in Google Drive:")
+            for item in items:
+                print(f"Name: {item['name']}, ID: {item['id']}, Type: {item['mimeType']}, Modified Time: {item['modifiedTime']}")
     # convert items to a pandas dataframe
     return pd.DataFrame(items)      
 
@@ -84,9 +85,7 @@ def download_file(file_id, destination_path):
     """Download a file from Google Drive by its ID."""
     request = drive_service.files().get_media(fileId=file_id)
     fh = io.FileIO(destination_path, mode='wb')
-    
     downloader = MediaIoBaseDownload(fh, request)
-    
     done = False
     while not done:
         status, done = downloader.next_chunk()
@@ -112,7 +111,7 @@ def delete_folder(folder_name):
     except HttpError as error:
         print(f'An error occurred: {error}')
 
-@pf.task(name="[gdrive] uppload")
+# @pf.task(name="[gdrive] uppload")
 def upload_file(file_path, folder_parent_id):
     try:
         file_metadata = {
