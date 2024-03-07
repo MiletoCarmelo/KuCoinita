@@ -184,8 +184,8 @@ def generate_statistics(df, median_lower_than = 150000, pic_max = 600000): # => 
     return grouped
 
 
-@pf.flow(name = "Kucoin", log_prints=True, flow_run_name="kucoin_" + datetime.today().strftime("%Y%m%d_%H%M%S"), max_mean = 15000, min_peak=600000)
-def flow_kucoin_candlesticks_update_to_yesterday(type=type,from_date_str="2021-01-01", to_date_str=to_date_str):
+@pf.flow(name = "Kucoin", log_prints=True, flow_run_name="kucoin_" + datetime.today().strftime("%Y%m%d_%H%M%S"))
+def flow_kucoin_candlesticks_update_to_yesterday(type="1day",from_date_str="2021-01-01", to_date_str=datetime.now().date().strftime("%Y-%m-%d"), max_mean = 15000, min_peak=600000):
     # get ticker list 
     tickers = ku.get_tickers_list()
     # filter quotCurrency == "USDT"
