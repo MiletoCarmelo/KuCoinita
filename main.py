@@ -126,26 +126,60 @@ def generate_file_for_ricardo(df):
     return pivot_df
     
 # @pf.task(name="[data] generate stat")
-def generate_statistics(df, sigma=3, median_lower_than = 500): 
+def generate_statistics(df, median_lower_than = 150, pic_max = 600000): # => pic en desous de 500 
     # select volume : 
-    df = df[["datetimeutc", "ticker", "volume"]]
+    df = df[["datetimeutc", "ticker", "volume", "high", "close"]]
     # convert ticker to string and volume to float : 
     df['ticker'] = df['ticker'].astype(str)
     df['volume'] = df['volume'].astype(float)
+    df['close'] = df['close'].astype(float)
+    df['high'] = df['high'].astype(float)
     # group by and calcul median, mean, number of days higher than 3 times the mean, number de days higher than 3 time the median : 
-    grouped = df.groupby('ticker')['volume'].agg(['mean', 'median'])
+    groupedVol = df.groupby('ticker')['volume'].agg(['mean', 'median'])
+    # rename mean and median by meanVolume and medianVolume 
+    groupedVol = groupedVol.rename(columns={'mean': 'meanVolume', 'median': 'medianVolume'})
+    # median et mean price : 
+    groupedPrice = df.groupby('ticker')['close'].agg(['mean', 'median'])
+    # rename mean and median by meanVolume and medianVolume 
+    groupedPrice = groupedPrice.rename(columns={'mean': 'meanClose', 'median': 'medianClose'})
+    # merge : 
+    grouped = groupedPrice.merge(groupedVol, on='ticker', how='left')
+    # add a column ver means < 500 
+    grouped['median' + str(median_lower_than)] = grouped['medianVolume'] < median_lower_than
+    grouped['mean' + str(median_lower_than)] = grouped['meanVolume'] < median_lower_than
     # Calculate number of days higher than 3 times the mean
     grouped['days_above_3x_mean'] = df[df['volume'] > 3 * df.groupby('ticker')['volume'].transform('mean')].groupby('ticker')['volume'].count()
     # Calculate number of days higher than 3 times the median
     grouped['days_above_3x_median'] = df[df['volume'] > 3 * df.groupby('ticker')['volume'].transform('median')].groupby('ticker')['volume'].count()
-    # add a column ver means < 500 
-    grouped['median' + str(median_lower_than)] = grouped['median'] < median_lower_than
-    grouped['mean' + str(median_lower_than)] = grouped['mean'] < median_lower_than
+    # Calculate number of days higher than 5 times the mean
+    grouped['days_above_5x_mean'] = df[df['volume'] > 5 * df.groupby('ticker')['volume'].transform('mean')].groupby('ticker')['volume'].count()
+    # Calculate number of days higher than 5 times the median
+    grouped['days_above_5x_median'] = df[df['volume'] > 5 * df.groupby('ticker')['volume'].transform('median')].groupby('ticker')['volume'].count()
+    # custom pic 
+    grouped['days_above_' + str(pic_max)] = df[df['volume'] >= pic_max].groupby('ticker')['volume'].count()
     # reset index
     grouped = grouped.reset_index()
     # sort by mean
-    grouped = grouped.sort_values("mean")
-    return grouped[["ticker", "median"+ str(median_lower_than), "mean"+ str(median_lower_than), "mean", "median", "days_above_3x_mean", "days_above_3x_median"]]
+    grouped = grouped.sort_values("meanVolume")
+    # left join to df , grouped['mean' + str(median_lower_than)] by ticker 
+    df = df.merge(grouped[['meanVolume', 'meanClose', 'ticker']], on='ticker', how='left')
+    # calcul high - mean in df : 
+    df['amplitudeVolume'] = df["volume"] - df['meanVolume']
+    # calcul high - mean in df : 
+    df['amplitudePrice'] = abs(df["high"].astype(float) - df['meanClose'].astype(float))
+    # group by 
+    dfVol = df[(df['amplitudeVolume'] > df['meanVolume'])].groupby('ticker')['amplitudeVolume'].agg(['mean'])
+    # rename in df2 mean to AmplitudeMean + str(median_lower_than)
+    dfVol = dfVol.rename(columns={'mean': 'AmplitudeVolMean_for_day_higher_than_mean'}).reset_index(drop=False)
+    # left join 
+    grouped = grouped.merge(dfVol[['ticker',  'AmplitudeVolMean_for_day_higher_than_mean']], on='ticker', how='left')
+    # group by 
+    dfPri = df[(df['amplitudePrice'] > df['meanClose'])].groupby('ticker')['amplitudePrice'].agg(['mean'])
+    # rename in df2 mean to AmplitudeMean + str(median_lower_than)
+    dfPri = dfPri.rename(columns={'mean': 'AmplitudePriceMean_for_day_higher_than_mean'}).reset_index(drop=False)
+    # left join 
+    grouped = grouped.merge(dfPri[['ticker',  'AmplitudePriceMean_for_day_higher_than_mean']], on='ticker', how='left')
+    return grouped
 
 
 @pf.flow(name = "Kucoin", log_prints=True, flow_run_name="kucoin_" + datetime.today().strftime("%Y%m%d_%H%M%S"))
@@ -173,14 +207,12 @@ def flow_kucoin_candlesticks_update_to_yesterday(type=type,from_date_str="2021-0
     file_name = "kucoin_history.xlsx"
     # update file : 
     update_file_to_google_drive(data, file_name)
-    os.remove(file_name)
     # generate statistics : 
-    data_stat = generate_statistics(data, sigma=3, median_lower_than = 500)
+    data_stat = generate_statistics(data, median_lower_than = 150, pic_max = 600000)
     # update stats data 
     file_name = "kucoin_statistcs.xlsx"
     # update file : 
     update_file_to_google_drive(data_stat, file_name)
-    os.remove(file_name)
     
 
 if __name__ == "__main__":

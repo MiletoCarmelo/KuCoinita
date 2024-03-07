@@ -65,18 +65,24 @@ async def _daily_volume(ticker="BTC-USDT", type="1day", from_date=from_date_str,
     # Check if the status code is 200
     if response.status_code == 200:
         # Convert the response to a DataFrame
-        df = pd.DataFrame(response.json()['data'])
-        # rename col : 
-        df.columns = ["unix_time", "open", "close", "high", "low", "volume", "turnover"]
-        # set col symbol : 
-        df["ticker"] = ticker
-        # convert unix_time to utc datetime : 
-        # Convert Unix time to UTC datetime
-        df["datetimeutc"] = [datetime.utcfromtimestamp(float(i)) for i in df.unix_time]
-        # return 
-        return df[["datetimeutc","unix_time","ticker","open","close","high","low","volume","turnover"]]
+        if 'data' in response.json():
+            df = pd.DataFrame(response.json()['data'])
+            if len(df.columns) == 7:  # Check if the first item in data has 7 elements
+                df.columns = ["unix_time", "open", "close", "high", "low", "volume", "turnover"]
+                # set col symbol : 
+                df["ticker"] = ticker
+                # convert unix_time to utc datetime : 
+                df["datetimeutc"] = [datetime.utcfromtimestamp(float(i)) for i in df.unix_time]
+                # return 
+                return df[["datetimeutc","unix_time","ticker","open","close","high","low","volume","turnover"]]
+            else:
+                print(f"Unexpected data format. Expected 7 elements, got {len(df.columns)}")
+                return pd.DataFrame(columns = ["unix_time", "open", "close", "high", "low", "volume", "turnover"])
+        else:
+            return pd.DataFrame(columns = ["unix_time", "open", "close", "high", "low", "volume", "turnover"])
     else:
-        print('Request failed with status code', response.status_code)
+        # print('Request failed with status code', response.status_code)
+        return pd.DataFrame(columns = ["unix_time", "open", "close", "high", "low", "volume", "turnover"])
 
 async def _daily_volume_task(tickers, type="1day", from_date=from_date_str, to_date=to_date_str):
     pbar = tqdm(total=len(tickers), position=0, ncols=90)  # Set total to the number of tasks
@@ -89,18 +95,27 @@ async def _daily_volume_task(tickers, type="1day", from_date=from_date_str, to_d
     pbar.close()  # Close the progress bar when done
     return pd.concat(results)
         
-    # return await asyncio.gather(*tasks)
+    # pd.concat(results)
 
 # @pf.task(name="[API] get candelsticks")
-def get_daily_candlesticks(tickers = ["BTC-USDT", "ETH-USDT"],type="1day", from_date=from_date_str, to_date=to_date_str): 
-    # apply nest_asyncio to allow nestedd use of asyncio0s event loop: 
+def get_daily_candlesticks(tickers = ["BTC-USDT", "ETH-USDT"],type="1day", from_date=from_date_str, to_date=to_date_str, units=100): 
+    data_return = pd.DataFrame()
+    # divid chunks :
+    chunks = [tickers[i:i + units] for i in range(0, len(tickers), 100)]
     nest_asyncio.apply()
-    # get the event loop 
-    loop = asyncio.get_event_loop()
-    # get all responses : 
-    data = loop.run_until_complete(_daily_volume_task(tickers, type, from_date, to_date))
-    # data concat : 
-    return data
+    for i in range(len(chunks)) :
+        t = chunks[i]
+        # apply nest_asyncio to allow nestedd use of asyncio0s event loop: 
+        # get the event loop 
+        loop = asyncio.get_event_loop()
+        # print info : 
+        print("starting chunk >> " + str(i + 1) + " (" + str(units) + "units)")
+        # get all responses : 
+        data = loop.run_until_complete(_daily_volume_task(t, type, from_date, to_date))
+        # loop.stop()
+        # push to data_return : 
+        data_return = data_return._append(data)
+    return data_return
 
 
 def get_daily_candlesticks_no_async(tickers = ["BTC-USDT", "ETH-USDT"],type="1day", from_date=from_date_str, to_date=to_date_str): 
