@@ -179,8 +179,8 @@ def generate_statistics(df, median_lower_than = 150000, pic_max = 600000): # => 
     dfPri = dfPri.rename(columns={'mean': 'AmplitudePriceMean_for_day_higher_than_mean'}).reset_index(drop=False)
     # left join 
     grouped = grouped.merge(dfPri[['ticker',  'AmplitudePriceMean_for_day_higher_than_mean']], on='ticker', how='left')
-    # convert to int : 
-    grouped = 
+    # convert to int 
+    grouped = grouped.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
     return grouped
 
 
