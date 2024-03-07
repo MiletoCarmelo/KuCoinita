@@ -126,7 +126,7 @@ def generate_file_for_ricardo(df):
     return pivot_df
     
 # @pf.task(name="[data] generate stat")
-def generate_statistics(df, median_lower_than = 150, pic_max = 600000): # => pic en desous de 500 
+def generate_statistics(df, median_lower_than = 150000, pic_max = 600000): # => pic en desous de 500 
     # select volume : 
     df = df[["datetimeutc", "ticker", "volume", "high", "close"]]
     # convert ticker to string and volume to float : 
@@ -179,10 +179,12 @@ def generate_statistics(df, median_lower_than = 150, pic_max = 600000): # => pic
     dfPri = dfPri.rename(columns={'mean': 'AmplitudePriceMean_for_day_higher_than_mean'}).reset_index(drop=False)
     # left join 
     grouped = grouped.merge(dfPri[['ticker',  'AmplitudePriceMean_for_day_higher_than_mean']], on='ticker', how='left')
+    # convert to int : 
+    grouped = 
     return grouped
 
 
-@pf.flow(name = "Kucoin", log_prints=True, flow_run_name="kucoin_" + datetime.today().strftime("%Y%m%d_%H%M%S"))
+@pf.flow(name = "Kucoin", log_prints=True, flow_run_name="kucoin_" + datetime.today().strftime("%Y%m%d_%H%M%S"), max_mean = 15000, min_peak=600000)
 def flow_kucoin_candlesticks_update_to_yesterday(type=type,from_date_str="2021-01-01", to_date_str=to_date_str):
     # get ticker list 
     tickers = ku.get_tickers_list()
@@ -208,7 +210,7 @@ def flow_kucoin_candlesticks_update_to_yesterday(type=type,from_date_str="2021-0
     # update file : 
     update_file_to_google_drive(data, file_name)
     # generate statistics : 
-    data_stat = generate_statistics(data, median_lower_than = 150, pic_max = 600000)
+    data_stat = generate_statistics(data, median_lower_than = max_mean, pic_max = min_peak)
     # update stats data 
     file_name = "kucoin_statistcs.xlsx"
     # update file : 
