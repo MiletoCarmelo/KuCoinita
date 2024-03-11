@@ -5,6 +5,7 @@ import nest_asyncio
 import asyncio
 import prefect as pf
 from tqdm.asyncio import tqdm
+import time
 
 
 # get date of today :
@@ -14,6 +15,49 @@ yesterday = datetime.now().date() - timedelta(days=10)
 to_date_str = today.strftime("%Y-%m-%d")
 from_date_str = yesterday.strftime("%Y-%m-%d")
 
+#############################################################
+#### request for 24 h stats #################################
+#############################################################
+
+
+def stats_24h():
+    unixtime = int(time.time())
+    # create api request : 
+    req = "https://api.kucoin.com/api/v1/market/allTickers?timestamp={}".format(unixtime)
+    # request the api
+    r = requests.get(req)
+    # convert to dataframe
+    df = pd.DataFrame(r.json()['data']['ticker'])
+    # get time stamp 
+    df['timestamp'] = r.json()['data']['time']
+    # arrange by vol desc 
+    df = df.sort_values(by='vol', ascending=False)
+    # get date from timestamp column
+    df['date'] = df['timestamp'].apply(lambda x: datetime.fromtimestamp(x/1000.0).strftime('%Y-%m-%d'))
+    # convert columns type to numeric
+    df['symbol'] = df['symbol'].astype('str')
+    df['symbolName'] = df['symbolName'].astype('str')
+    df['buy'] = df['buy'].astype('float')
+    df['bestBidSize'] = df['bestBidSize'].astype('float')
+    df['sell'] = df['sell'].astype('float')
+    df['bestAskSize'] = df['bestAskSize'].astype('float')
+    df['changePrice'] = df['changePrice'].astype('float')
+    df['changeRate'] = df['changeRate'].astype('float')
+    df['high'] = df['high'].astype('float')
+    df['low'] = df['low'].astype('float')
+    df['vol'] = df['vol'].astype('float')
+    df['volValue'] = df['volValue'].astype('float')
+    df['last'] = df['last'].astype('float')
+    df['averagePrice'] = df['averagePrice'].astype('float')
+    df['takerFeeRate'] = df['takerFeeRate'].astype('float')
+    df['makerFeeRate'] = df['makerFeeRate'].astype('float')
+    df['takerCoefficient'] = df['takerCoefficient'].astype('float')
+    df['makerCoefficient'] = df['makerCoefficient'].astype('float')
+    df['timestamp'] = df['timestamp'].astype('int')
+    # convert date column to datetime with format '%Y-%m-%d'
+    df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
+    # return 
+    return df 
 
 ############################################################################################################################################
 #### request for candelsticks ##############################################################################################################

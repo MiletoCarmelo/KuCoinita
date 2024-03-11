@@ -5,7 +5,7 @@ from src import pg as pg
 from datetime import datetime, timedelta
 import prefect as pf
 import os 
-import pandas
+import pandas as pd
 
 mode = "update"
 type = "1day"
@@ -75,7 +75,7 @@ def add_to_kucoin_all_file(data, file_name_all):
         os.remove(file_name_all)
 
 
-@pf.flow(name = "Kucoin CandleSticks", log_prints=True, flow_run_name="kucoin_candlesticks_" + datetime.today().strftime("%Y%m%d_%H%M%S"))
+# @pf.flow(name = "Kucoin CandleSticks", log_prints=True, flow_run_name="kucoin_candlesticks_" + datetime.today().strftime("%Y%m%d_%H%M%S"))
 def flow_kucoin_candlesticks_daily(mode=mode,type=type,from_date_str=from_date_str, to_date_str=to_date_str,table_name=table_name):
     # get ticker list 
     tickers = ku.get_tickers_list()
@@ -126,66 +126,56 @@ def generate_file_for_ricardo(df):
     return pivot_df
     
 # @pf.task(name="[data] generate stat")
-def generate_statistics(df, median_lower_than = 150000, pic_max = 600000): # => pic en desous de 500 
+def generate_statistics(df, mean_lower_than = 100000, pic_max_1 = 400000, pic_max_2 = 600000): 
     # select volume : 
-    df = df[["datetimeutc", "ticker", "volume", "high", "close"]]
+    df = df[["datetimeutc", "ticker", "volume", "high", "close"]].drop_duplicates()
     # convert ticker to string and volume to float : 
     df['ticker'] = df['ticker'].astype(str)
     df['volume'] = df['volume'].astype(float)
     df['close'] = df['close'].astype(float)
     df['high'] = df['high'].astype(float)
-    # group by and calcul median, mean, number of days higher than 3 times the mean, number de days higher than 3 time the median : 
-    groupedVol = df.groupby('ticker')['volume'].agg(['mean', 'median'])
+    # date for last year : 
+    to_date = datetime.strptime(to_date_str, "%Y-%m-%d")
+    from_date = to_date - timedelta(days=365)
+    # global mean volume last year :
+    groupedVol1Y = df.loc[df["datetimeutc"] >= from_date].groupby('ticker')['volume'].agg(['mean'])
     # rename mean and median by meanVolume and medianVolume 
-    groupedVol = groupedVol.rename(columns={'mean': 'meanVolume', 'median': 'medianVolume'})
-    # median et mean price : 
-    groupedPrice = df.groupby('ticker')['close'].agg(['mean', 'median'])
-    # rename mean and median by meanVolume and medianVolume 
-    groupedPrice = groupedPrice.rename(columns={'mean': 'meanClose', 'median': 'medianClose'})
-    # merge : 
-    grouped = groupedPrice.merge(groupedVol, on='ticker', how='left')
-    # add a column ver means < 500 
-    grouped['median' + str(median_lower_than)] = grouped['medianVolume'] < median_lower_than
-    grouped['mean' + str(median_lower_than)] = grouped['meanVolume'] < median_lower_than
-    # Calculate number of days higher than 3 times the mean
-    grouped['days_above_3x_mean'] = df[df['volume'] > 3 * df.groupby('ticker')['volume'].transform('mean')].groupby('ticker')['volume'].count()
-    # Calculate number of days higher than 3 times the median
-    grouped['days_above_3x_median'] = df[df['volume'] > 3 * df.groupby('ticker')['volume'].transform('median')].groupby('ticker')['volume'].count()
-    # Calculate number of days higher than 5 times the mean
-    grouped['days_above_5x_mean'] = df[df['volume'] > 5 * df.groupby('ticker')['volume'].transform('mean')].groupby('ticker')['volume'].count()
-    # Calculate number of days higher than 5 times the median
-    grouped['days_above_5x_median'] = df[df['volume'] > 5 * df.groupby('ticker')['volume'].transform('median')].groupby('ticker')['volume'].count()
-    # custom pic 
-    grouped['days_above_' + str(pic_max)] = df[df['volume'] >= pic_max].groupby('ticker')['volume'].count()
-    # reset index
+    groupedVol1Y = groupedVol1Y.rename(columns={'mean': 'meanVolume1Year'})
+    # merge first output : 
+    grouped = groupedVol1Y.copy()
+    # calcul diff vol at day i and mean vol last year
+    df = df.merge(groupedVol1Y, on="ticker", how="left")
+    df["VolumeDeltaMean1Y"] = df["volume"] - df["meanVolume1Year"]
+    # is mean overall under cumstum  
+    grouped['HasVolumeMean1YearUnder' + str(mean_lower_than)] = grouped['meanVolume1Year'] < mean_lower_than
+    # Calculate number of days higher than custum pic_max_1
+    days_above_custum = pd.DataFrame(df[df['volume'] > pic_max_1].groupby('ticker')['volume'].agg(['count', 'mean']))
+    days_above_custum = days_above_custum.rename(columns={'count': 'NbDaysForVolumePicsHigherThan' + str(pic_max_1), 'mean': 'MeanVolume1YearPicsHigherThan' + str(pic_max_1)})
+    grouped = grouped.merge(days_above_custum, on="ticker", how="left")
+    # Calculate number of days higher than custum pic_max_2
+    days_above_custum_2 = pd.DataFrame(df[df['volume'] > pic_max_2].groupby('ticker')['volume'].agg(['count', 'mean']))
+    days_above_custum_2 = days_above_custum_2.rename(columns={'count': 'NbDaysForVolumePicsHigherThan' + str(pic_max_2), 'mean': 'MeanVolume1YearPicsHigherThan' + str(pic_max_2)})
+    grouped = grouped.merge(days_above_custum_2, on="ticker", how="left")
+    # Calculate number of days higher than 5 sigma
+    days_above_5x_mean = pd.DataFrame(df[df['volume'] > 5 * df["meanVolume1Year"]].groupby('ticker')['volume'].agg(['count', 'mean']))
+    days_above_5x_mean = days_above_5x_mean.rename(columns={'count': 'NbDaysForVolumePicsHigherThan5Sigma', 'mean': 'MeanVolume1YearPicsHigherThan5Sigma'})
+    grouped = grouped.merge(days_above_5x_mean, on="ticker", how="left")
+    # reset index : 
     grouped = grouped.reset_index()
-    # sort by mean
-    grouped = grouped.sort_values("meanVolume")
-    # left join to df , grouped['mean' + str(median_lower_than)] by ticker 
-    df = df.merge(grouped[['meanVolume', 'meanClose', 'ticker']], on='ticker', how='left')
-    # calcul high - mean in df : 
-    df['amplitudeVolume'] = df["volume"] - df['meanVolume']
-    # calcul high - mean in df : 
-    df['amplitudePrice'] = abs(df["high"].astype(float) - df['meanClose'].astype(float))
-    # group by 
-    dfVol = df[(df['amplitudeVolume'] > df['meanVolume'])].groupby('ticker')['amplitudeVolume'].agg(['mean'])
-    # rename in df2 mean to AmplitudeMean + str(median_lower_than)
-    dfVol = dfVol.rename(columns={'mean': 'AmplitudeVolMean_for_day_higher_than_mean'}).reset_index(drop=False)
-    # left join 
-    grouped = grouped.merge(dfVol[['ticker',  'AmplitudeVolMean_for_day_higher_than_mean']], on='ticker', how='left')
-    # group by 
-    dfPri = df[(df['amplitudePrice'] > df['meanClose'])].groupby('ticker')['amplitudePrice'].agg(['mean'])
-    # rename in df2 mean to AmplitudeMean + str(median_lower_than)
-    dfPri = dfPri.rename(columns={'mean': 'AmplitudePriceMean_for_day_higher_than_mean'}).reset_index(drop=False)
-    # left join 
-    grouped = grouped.merge(dfPri[['ticker',  'AmplitudePriceMean_for_day_higher_than_mean']], on='ticker', how='left')
-    # convert to int 
-    grouped = grouped.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
+    # add 24 last hours price stat : 
+    stat24h = ku.stats_24h()
+    stat24h = stat24h[["last", 'high', 'volValue']].rename(columns={'last': 'lastPrice', 'volValue' : 'meanVolume24Hours'})
+    # calcul the diff price betwenn High and lastPrice = highestSnipePrice
+    stat24h['SnipePrice24Hours'] = stat24h['high'] - stat24h['lastPrice']
+    # calcul the diff price betwenn High and lastPrice = highestSnipePrice
+    stat24h['SnipePriceVariation24Hours'] = (stat24h['high'] - stat24h['lastPrice'])/(stat24h['high'])
+    # is mean 24 h volme under cumstum  
+    stat24h['HasVolumeMean24HoursUnder' + str(mean_lower_than)] = stat24h['meanVolume24Hours'] < mean_lower_than
     return grouped
 
 
-@pf.flow(name = "Kucoin", log_prints=True, flow_run_name="kucoin_" + datetime.today().strftime("%Y%m%d_%H%M%S"))
-def flow_kucoin_candlesticks_update_to_yesterday(type="1day",from_date_str="2021-01-01", to_date_str=datetime.now().date().strftime("%Y-%m-%d"), max_mean = 15000, min_peak=600000):
+# @pf.flow(name = "Kucoin", log_prints=True, flow_run_name="kucoin_" + datetime.today().strftime("%Y%m%d_%H%M%S"))
+def flow_kucoin_candlesticks_update_to_yesterday(type="1day",from_date_str="2021-01-01", to_date_str=datetime.now().date().strftime("%Y-%m-%d"), max_mean = 15000, min_peak_1=400000, min_peak_2=600000):
     # get ticker list 
     tickers = ku.get_tickers_list()
     # filter quotCurrency == "USDT"
@@ -196,26 +186,26 @@ def flow_kucoin_candlesticks_update_to_yesterday(type="1day",from_date_str="2021
     tickers = tickers["symbol"].to_list()
     # generate data
     data = ku.get_daily_candlesticks(tickers=tickers, type=type, from_date=from_date_str, to_date=to_date_str)
-    # sort_values datetimeutc ticker 
+        # sort_values datetimeutc ticker 
     data = data.sort_values(['datetimeutc', 'ticker'])
     # generate data for ric : 
     data_ric = generate_file_for_ricardo(data)  
-    # replace all NaN by 0 : 
+        # replace all NaN by 0 : 
     data_ric = data_ric.fillna(0.0)
     file_name = "kucoin_volume.xlsx"
-    # update file : 
+        # update file : 
     update_file_to_google_drive(data_ric, file_name)
-    # update raw data : 
+        # update raw data : 
     file_name = "kucoin_history.xlsx"
     # update file : 
     update_file_to_google_drive(data, file_name)
     # generate statistics : 
-    data_stat = generate_statistics(data, median_lower_than = max_mean, pic_max = min_peak)
+    data_stat = generate_statistics(data, mean_lower_than = max_mean, pic_max_1 = min_peak_1, pic_max_2 = min_peak_2 )
     # update stats data 
     file_name = "kucoin_statistcs.xlsx"
     # update file : 
     update_file_to_google_drive(data_stat, file_name)
-    
+        
 
 if __name__ == "__main__":
     flow_kucoin_candlesticks_update_to_yesterday()

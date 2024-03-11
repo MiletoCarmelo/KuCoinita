@@ -127,7 +127,7 @@ class sql_connect :
 # ex postgress > query = "SELECT x.* FROM public.trade_watchlist x"
 # ex mssql > query = "SELECT TOP (1000) * FROM [DataHub].[dbo].[vwTrade]"
         
-@pf.task(name="[pg] export")
+# @pf.task(name="[pg] export")
 def export_to_pg(table,data,overwrite="append"): 
     # export table :
     con = sql_connect("postgresql")
