@@ -56,6 +56,8 @@ def stats_24h():
     df['timestamp'] = df['timestamp'].astype('int')
     # convert date column to datetime with format '%Y-%m-%d'
     df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
+    # rename symbol to ticker 
+    df = df.rename(columns={"symbol":"ticker"})
     # return 
     return df 
 
@@ -112,21 +114,21 @@ async def _daily_volume(ticker="BTC-USDT", type="1day", from_date=from_date_str,
         if 'data' in response.json():
             df = pd.DataFrame(response.json()['data'])
             if len(df.columns) == 7:  # Check if the first item in data has 7 elements
-                df.columns = ["unix_time", "open", "close", "high", "low", "volume", "turnover"]
+                df.columns = ["unix_time", "open", "close", "high", "low", "volume_old", "volume"]
                 # set col symbol : 
                 df["ticker"] = ticker
                 # convert unix_time to utc datetime : 
                 df["datetimeutc"] = [datetime.utcfromtimestamp(float(i)) for i in df.unix_time]
                 # return 
-                return df[["datetimeutc","unix_time","ticker","open","close","high","low","volume","turnover"]]
+                return df[["datetimeutc","unix_time","ticker","open","close","high","low","volume_old", "volume"]]
             else:
                 print(f"Unexpected data format. Expected 7 elements, got {len(df.columns)}")
-                return pd.DataFrame(columns = ["unix_time", "open", "close", "high", "low", "volume", "turnover"])
+                return pd.DataFrame(columns = ["unix_time", "open", "close", "high", "low", "volume_old", "volume"])
         else:
-            return pd.DataFrame(columns = ["unix_time", "open", "close", "high", "low", "volume", "turnover"])
+            return pd.DataFrame(columns = ["unix_time", "open", "close", "high", "low", "volume_old", "volume"])
     else:
         # print('Request failed with status code', response.status_code)
-        return pd.DataFrame(columns = ["unix_time", "open", "close", "high", "low", "volume", "turnover"])
+        return pd.DataFrame(columns = ["unix_time", "open", "close", "high", "low", "volume_old", "volume"])
 
 async def _daily_volume_task(tickers, type="1day", from_date=from_date_str, to_date=to_date_str):
     pbar = tqdm(total=len(tickers), position=0, ncols=90)  # Set total to the number of tasks

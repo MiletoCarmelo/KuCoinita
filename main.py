@@ -164,13 +164,15 @@ def generate_statistics(df, mean_lower_than = 100000, pic_max_1 = 400000, pic_ma
     grouped = grouped.reset_index()
     # add 24 last hours price stat : 
     stat24h = ku.stats_24h()
-    stat24h = stat24h[["last", 'high', 'volValue']].rename(columns={'last': 'lastPrice', 'volValue' : 'meanVolume24Hours'})
+    stat24h = stat24h[["ticker", "last", 'high', 'volValue']].rename(columns={'last': 'lastPrice', 'volValue' : 'meanVolume24Hours'})
     # calcul the diff price betwenn High and lastPrice = highestSnipePrice
     stat24h['SnipePrice24Hours'] = stat24h['high'] - stat24h['lastPrice']
     # calcul the diff price betwenn High and lastPrice = highestSnipePrice
     stat24h['SnipePriceVariation24Hours'] = (stat24h['high'] - stat24h['lastPrice'])/(stat24h['high'])
     # is mean 24 h volme under cumstum  
     stat24h['HasVolumeMean24HoursUnder' + str(mean_lower_than)] = stat24h['meanVolume24Hours'] < mean_lower_than
+    # left join 
+    grouped = grouped.merge(stat24h[["ticker", "SnipePriceVariation24Hours",'HasVolumeMean24HoursUnder' + str(mean_lower_than)]], on="ticker",how="left")
     return grouped
 
 
@@ -179,13 +181,13 @@ def flow_kucoin_candlesticks_update_to_yesterday(type="1day",from_date_str="2021
     # get ticker list 
     tickers = ku.get_tickers_list()
     # filter quotCurrency == "USDT"
-    tickers = tickers.loc[tickers["quoteCurrency"] == "USDT"]
-    # filter not having 3S, 3L, 2S, 2L
-    tickers = tickers.loc[~tickers["symbol"].str.contains("3S|3L|2S|2L")]
-    # to list
-    tickers = tickers["symbol"].to_list()
-    # generate data
-    data = ku.get_daily_candlesticks(tickers=tickers, type=type, from_date=from_date_str, to_date=to_date_str)
+tickers = tickers.loc[tickers["quoteCurrency"] == "USDT"]
+# filter not having 3S, 3L, 2S, 2L
+tickers = tickers.loc[~tickers["symbol"].str.contains("3S|3L|2S|2L")]
+# to list
+tickers = tickers["symbol"].to_list()
+# generate data
+data = ku.get_daily_candlesticks(tickers=tickers, type=type, from_date=from_date_str, to_date=to_date_str)
         # sort_values datetimeutc ticker 
     data = data.sort_values(['datetimeutc', 'ticker'])
     # generate data for ric : 
