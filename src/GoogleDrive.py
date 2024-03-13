@@ -111,7 +111,7 @@ def delete_folder(folder_name):
     except HttpError as error:
         print(f'An error occurred: {error}')
 
-# @pf.task(name="[gdrive] uppload")
+@pf.task(name="[gdrive] uppload")
 def upload_file(file_path, folder_parent_id):
     try:
         file_metadata = {

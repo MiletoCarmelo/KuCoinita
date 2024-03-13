@@ -19,7 +19,7 @@ to_date_str = today.strftime("%Y-%m-%d")
 from_date_str = yesterday.strftime("%Y-%m-%d")
 
 
-# @pf.task(name="[gdrive] update file")
+@pf.task(name="[gdrive] update file")
 def update_file_to_google_drive(data, file_name): 
     # export data : 
     # get list file to see if exists and replace :
@@ -37,7 +37,7 @@ def update_file_to_google_drive(data, file_name):
     print(file_name + " > exported to google drive")
 
 
-# @pf.task(name="[gdrive] update kucoin_all_volume file")
+@pf.task(name="[gdrive] update kucoin_all_volume file")
 def add_to_kucoin_all_file(data, file_name_all):
     # get list file to see if exists and replace :
     list_files = gd.list_files(parent_folder_id='1iTMazQALR7EgoRuxp-T3yTMXNWMUgGHX')
@@ -75,7 +75,7 @@ def add_to_kucoin_all_file(data, file_name_all):
         os.remove(file_name_all)
 
 
-# @pf.flow(name = "Kucoin CandleSticks", log_prints=True, flow_run_name="kucoin_candlesticks_" + datetime.today().strftime("%Y%m%d_%H%M%S"))
+@pf.flow(name = "Kucoin CandleSticks", log_prints=True, flow_run_name="kucoin_candlesticks_" + datetime.today().strftime("%Y%m%d_%H%M%S"))
 def flow_kucoin_candlesticks_daily(mode=mode,type=type,from_date_str=from_date_str, to_date_str=to_date_str,table_name=table_name):
     # get ticker list 
     tickers = ku.get_tickers_list()
@@ -112,7 +112,7 @@ def flow_kucoin_candlesticks_daily(mode=mode,type=type,from_date_str=from_date_s
 
 ########################### method 2 ##############################
 
-# @pf.task(name="[data] generate data for ric.")
+@pf.task(name="[data] generate data for ric.")
 def generate_file_for_ricardo(df):
     # select volume : 
     df = df[["datetimeutc", "ticker", "volume"]]
@@ -125,7 +125,7 @@ def generate_file_for_ricardo(df):
     pivot_df.reset_index(inplace=True)
     return pivot_df
     
-# @pf.task(name="[data] generate stat")
+@pf.task(name="[data] generate stat")
 def generate_statistics(df, mean_lower_than = 100000, pic_max_1 = 400000, pic_max_2 = 600000): 
     # select volume : 
     df = df[["datetimeutc", "ticker", "volume", "high", "close"]].drop_duplicates()
@@ -176,7 +176,7 @@ def generate_statistics(df, mean_lower_than = 100000, pic_max_1 = 400000, pic_ma
     return grouped
 
 
-# @pf.flow(name = "Kucoin", log_prints=True, flow_run_name="kucoin_" + datetime.today().strftime("%Y%m%d_%H%M%S"))
+@pf.flow(name = "Kucoin", log_prints=True, flow_run_name="kucoin_" + datetime.today().strftime("%Y%m%d_%H%M%S"))
 def flow_kucoin_candlesticks_update_to_yesterday(type="1day",from_date_str="2021-01-01", to_date_str=datetime.now().date().strftime("%Y-%m-%d"), max_mean = 15000, min_peak_1=400000, min_peak_2=600000):
     # get ticker list 
     tickers = ku.get_tickers_list()
