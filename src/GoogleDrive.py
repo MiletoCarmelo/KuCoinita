@@ -10,22 +10,21 @@ import prefect as pf
 from prefect.blocks.system import Secret
 
 secret_block_google_share_drive = Secret.load("google-share-drive")
-
-
-# Define the Google Drive API scopes and service account file path
-SCOPES = ['https://www.googleapis.com/auth/drive']
-SERVICE_ACCOUNT_FILE = "/mnt/c/Users/Sleazy/Desktop/Projects/PrefectDeploymentDocker/credentials/GoogleApiKey.json"
-
-
 # Access the stored secret
 
 SERVICE_ACCOUNT_FILE = secret_block_google_share_drive.get()
 
+# Define the Google Drive API scopes and service account file path
+SCOPES = ['https://www.googleapis.com/auth/drive']
 # Create credentials using the service account file
-credentials = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+# credentials = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+#SERVICE_ACCOUNT_FILE = "/mnt/c/Users/Sleazy/Desktop/Projects/PrefectDeploymentDocker/credentials/GoogleApiKey.json"
+
+# create credential using info vjson variable :
+credentials = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 
 # Build the Google Drive service
-drive_service = build('drive', 'v3', credentials=credentials)
+drive_service = build('drive', 'v3', credentials=secret_block_google_share_drive)
 
 def create_folder(folder_name, parent_folder_id=None):
     """Create a folder in Google Drive and return its ID."""
