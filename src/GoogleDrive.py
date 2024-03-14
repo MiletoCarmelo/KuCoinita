@@ -8,11 +8,13 @@ from googleapiclient.http import MediaIoBaseDownload
 import pandas as pd
 import prefect as pf
 from prefect.blocks.system import Secret
+import json
 
 secret_block_google_share_drive = Secret.load("google-share-drive")
 # Access the stored secret
+print(secret_block_google_share_drive.get())
 
-SERVICE_ACCOUNT_FILE = secret_block_google_share_drive.get()
+SERVICE_ACCOUNT_FILE = json.loads(secret_block_google_share_drive.get())
 
 # Define the Google Drive API scopes and service account file path
 SCOPES = ['https://www.googleapis.com/auth/drive']
@@ -21,7 +23,7 @@ SCOPES = ['https://www.googleapis.com/auth/drive']
 #SERVICE_ACCOUNT_FILE = "/mnt/c/Users/Sleazy/Desktop/Projects/PrefectDeploymentDocker/credentials/GoogleApiKey.json"
 
 # create credential using info vjson variable :
-credentials = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+credentials = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_FILE)
 
 # Build the Google Drive service
 drive_service = build('drive', 'v3', credentials=secret_block_google_share_drive)
