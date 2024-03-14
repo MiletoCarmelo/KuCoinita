@@ -209,7 +209,7 @@ def flow_kucoin_candlesticks_update_to_yesterday(type="1day",from_date_str="2021
     update_file_to_google_drive(data_stat, file_name)
         
 
-#if __name__ == "__main__":
-#    flow_kucoin_candlesticks_update_to_yesterday()
+if __name__ == "__main__":
+    flow_kucoin_candlesticks_update_to_yesterday()
 
     

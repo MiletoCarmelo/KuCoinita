@@ -7,11 +7,19 @@ from googleapiclient.http import MediaFileUpload
 from googleapiclient.http import MediaIoBaseDownload
 import pandas as pd
 import prefect as pf
+from prefect.blocks.system import Secret
+
+secret_block_google_share_drive = Secret.load("google-share-drive")
 
 
 # Define the Google Drive API scopes and service account file path
 SCOPES = ['https://www.googleapis.com/auth/drive']
 SERVICE_ACCOUNT_FILE = "/mnt/c/Users/Sleazy/Desktop/Projects/PrefectDeploymentDocker/credentials/GoogleApiKey.json"
+
+
+# Access the stored secret
+
+SERVICE_ACCOUNT_FILE = secret_block_google_share_drive.get()
 
 # Create credentials using the service account file
 credentials = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
