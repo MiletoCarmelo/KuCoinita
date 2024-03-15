@@ -12,13 +12,12 @@ import json
 
 from prefect_gcp import GcpCredentials
 gcp_credentials_block = GcpCredentials.load("google-share-drive")
-SERVICE_ACCOUNT_FILE = json.loads(gcp_credentials_block.service_account_info)
 
 # Define the Google Drive API scopes and service account file path
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
 # create credential using info vjson variable :
-credentials = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+credentials = gcp_credentials_block.get_credentials_from_service_account()
 
 # # Define the Google Drive API scopes and service account file path
 # SCOPES = ['https://www.googleapis.com/auth/drive']
