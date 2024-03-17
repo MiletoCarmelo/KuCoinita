@@ -21,7 +21,7 @@ credentials = gcp_credentials_block.get_credentials_from_service_account()
 
 # # Define the Google Drive API scopes and service account file path
 # SCOPES = ['https://www.googleapis.com/auth/drive']
-# SERVICE_ACCOUNT_FILE = "/mnt/c/Users/Sleazy/Desktop/Projects/PrefectDeploymentDocker/credentials/GoogleApiKey.json"d 
+# SERVICE_ACCOUNT_FILE = "/mnt/c/Users/Sleazy/Desktop/Projects/PrefectDeploymentDocker/credentials/GoogleApiKey.json"
 # # Create credentials using the service account file
 # credentials = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 
@@ -37,12 +37,10 @@ def create_folder(folder_name, parent_folder_id=None):
             "mimeType": "application/vnd.google-apps.folder",
             'parents': [parent_folder_id] if parent_folder_id else []
         }
-
         created_folder = drive_service.files().create(
             body=folder_metadata,
             fields='id'
         ).execute()
-
         print(f'Created Folder ID: {created_folder["id"]}')
         return created_folder["id"]
     except HttpError as error:
@@ -56,7 +54,6 @@ def list_folder(parent_folder_id=None):
         fields="nextPageToken, files(id, name, mimeType)"
     ).execute()
     items = results.get('files', [])
-
     if not items:
         print("No folders or files found in Google Drive.")
     else:
@@ -108,7 +105,6 @@ def delete_folder(folder_name):
             q=f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder'",
             fields='files(id,name)').execute()
         items = results.get('files', [])
-
         if not items:
             print('No folder found.')
         else:
@@ -117,7 +113,6 @@ def delete_folder(folder_name):
                 print(u'{0} ({1})'.format(item['name'], item['id']))
                 # Delete the folder
                 drive_service.files().delete(fileId=item['id']).execute()
-
     except HttpError as error:
         print(f'An error occurred: {error}')
 
