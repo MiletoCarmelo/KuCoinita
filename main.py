@@ -25,7 +25,7 @@ def update_file_to_google_drive(data, file_name):
     # get list file to see if exists and replace :
     #list_files = gd.list_files(parent_folder_id='1iTMazQALR7EgoRuxp-T3yTMXNWMUgGHX')
     list_files = gd.list_files(parent_folder_id="1ppBW9GScazZOT53jzcx9g5Qsc4lU_pbr")
-    if list_files.empty == False :
+    if "name" in list_files.columns :
         file_id = list_files.loc[list_files["name"]==file_name].reset_index()
         if len(file_id) > 0 :
             gd.delete_files(file_or_folder_id=file_id["id"][0])
