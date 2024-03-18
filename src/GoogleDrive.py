@@ -10,11 +10,27 @@ import prefect as pf
 from prefect.blocks.system import Secret
 import json
 
-# from prefect_gcp import GcpCredentials
-# gcp_credentials_block = GcpCredentials.load("google-share-drive")
+
+from prefect.blocks.system import Secret
+
+secret_block = Secret.load("google-drive-share")
 
 # Define the Google Drive API scopes and service account file path
 SCOPES = ['https://www.googleapis.com/auth/drive']
+
+
+# Access the stored secret
+creds = secret_block.get()
+service_account_info = json.loads(creds)
+
+# use secret in service_account.Credentials 
+# Define the Google Drive API scopes and service account file path
+credentials = service_account.Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
+
+# from prefect_gcp import GcpCredentials
+# gcp_credentials_block = GcpCredentials.load("google-share-drive")
+
+
 
 
 # create credential using info vjson variable :
@@ -23,9 +39,9 @@ SCOPES = ['https://www.googleapis.com/auth/drive']
 # # Define the Google Drive API scopes and service account file path
 # SCOPES = ['https://www.googleapis.com/auth/drive']
 # SERVICE_ACCOUNT_FILE = "/mnt/c/Users/Sleazy/Desktop/Projects/PrefectDeploymentDocker/credentials/GoogleApiKey.json"
-SERVICE_ACCOUNT_FILE = "./credentials/GoogleApiKey.json"
+# SERVICE_ACCOUNT_FILE = "./credentials/GoogleApiKey.json"
 # # Create credentials using the service account file
-credentials = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+# credentials = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 
 
 # Build the Google Drive service
