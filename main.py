@@ -189,7 +189,7 @@ def generate_statistics(df, mean_lower_than = 100000, pic_max_1 = 400000, pic_ma
     return grouped
 
 
-@pf.flow(name = "Kucoin", log_prints=True, flow_run_name="kucoin_" + datetime.today().strftime("%Y%m%d_%H%M%S"))
+@pf.flow(name = "Kucoin stats", log_prints=True, flow_run_name="kucoin_" + datetime.today().strftime("%Y%m%d_%H%M%S"))
 def flow_kucoin_candlesticks_update_to_yesterday(type="1day",from_date_str="2021-01-01", to_date_str=datetime.now().date().strftime("%Y-%m-%d"), max_mean = 15000, min_peak_1=400000, min_peak_2=600000):
     # get ticker list 
     tickers = ku.get_tickers_list()
