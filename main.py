@@ -112,7 +112,7 @@ def flow_kucoin_candlesticks_daily(mode=mode,type=type,from_date_str=from_date_s
         # add to all_volume_file : 
         add_to_kucoin_all_file(df, file_name_all)
 
-@pf.flow(name = "update files access")
+@pf.task(name = "update files access")
 def flow_update_files_access(parent_folder_id, emails):
     # get list file : 
     list_file = gd.list_files(parent_folder_id=parent_folder_id)
