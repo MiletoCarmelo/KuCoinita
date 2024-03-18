@@ -19,7 +19,7 @@ to_date_str = today.strftime("%Y-%m-%d")
 from_date_str = yesterday.strftime("%Y-%m-%d")
 
 
-@pf.task(name="[gdrive] update file")
+# @pf.task(name="[gdrive] update file") > because the function has two sub tasks, it is not a task
 def update_file_to_google_drive(data, file_name): 
     # export data : 
     # get list file to see if exists and replace :
