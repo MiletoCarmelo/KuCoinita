@@ -24,9 +24,10 @@ def update_file_to_google_drive(data, file_name):
     # export data : 
     # get list file to see if exists and replace :
     list_files = gd.list_files(parent_folder_id='1iTMazQALR7EgoRuxp-T3yTMXNWMUgGHX')
-    file_id = list_files.loc[list_files["name"]==file_name].reset_index()
-    if len(file_id) > 0 :
-        gd.delete_files(file_or_folder_id=file_id["id"][0])
+    if list_files.empty == False :
+        file_id = list_files.loc[list_files["name"]==file_name].reset_index()
+        if len(file_id) > 0 :
+            gd.delete_files(file_or_folder_id=file_id["id"][0])
     # export to xslx 
     xs.export_toxlsx(data, "./" + file_name)
     # push to google drive : 
