@@ -229,7 +229,7 @@ def flow_kucoin_candlesticks_update_to_yesterday(type="1day",from_date_str="2021
     flow_update_files_access(parent_folder_id="1ppBW9GScazZOT53jzcx9g5Qsc4lU_pbr", emails=["carmelo.mileto@gmail.com", "wolf.bank@gmail.com", "wolfbank@gmail.com", "rmateus90@gmail.com"])
         
 
-if __name__ == "__main__":
-    flow_kucoin_candlesticks_update_to_yesterday()
+# if __name__ == "__main__":
+#    flow_kucoin_candlesticks_update_to_yesterday()
 
     
