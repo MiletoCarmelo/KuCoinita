@@ -23,7 +23,8 @@ from_date_str = yesterday.strftime("%Y-%m-%d")
 def update_file_to_google_drive(data, file_name): 
     # export data : 
     # get list file to see if exists and replace :
-    list_files = gd.list_files(parent_folder_id='1iTMazQALR7EgoRuxp-T3yTMXNWMUgGHX')
+    #list_files = gd.list_files(parent_folder_id='1iTMazQALR7EgoRuxp-T3yTMXNWMUgGHX')
+    list_files = gd.list_files(parent_folder_id="1ppBW9GScazZOT53jzcx9g5Qsc4lU_pbr")
     if list_files.empty == False :
         file_id = list_files.loc[list_files["name"]==file_name].reset_index()
         if len(file_id) > 0 :
@@ -31,7 +32,8 @@ def update_file_to_google_drive(data, file_name):
     # export to xslx 
     xs.export_toxlsx(data, "./" + file_name)
     # push to google drive : 
-    id = gd.upload_file( file_path= "./" + file_name, folder_parent_id='1iTMazQALR7EgoRuxp-T3yTMXNWMUgGHX')
+    # id = gd.upload_file( file_path= "./" + file_name, folder_parent_id='1iTMazQALR7EgoRuxp-T3yTMXNWMUgGHX')
+    id = gd.upload_file( file_path= "./" + file_name, folder_parent_id='1ppBW9GScazZOT53jzcx9g5Qsc4lU_pbr')
     # remove file : 
     if os.path.isfile(file_name):
         os.remove(file_name)
@@ -110,6 +112,16 @@ def flow_kucoin_candlesticks_daily(mode=mode,type=type,from_date_str=from_date_s
         # add to all_volume_file : 
         add_to_kucoin_all_file(df, file_name_all)
 
+@pf.flow(name = "update files access")
+def flow_update_files_access(parent_folder_id, emails):
+    # get list file : 
+    list_file = gd.list_files(parent_folder_id=parent_folder_id)
+    for i in range(len(list_file)):
+        # get file id : 
+        file_id = list_file["id"][i]
+        # update access : 
+        for e in emails : 
+            gd.update_file_shared_user_list(file_id=file_id, email=e)
 
 ########################### method 2 ##############################
 
@@ -208,6 +220,8 @@ def flow_kucoin_candlesticks_update_to_yesterday(type="1day",from_date_str="2021
     file_name = "kucoin_statistcs.xlsx"
     # update file : 
     update_file_to_google_drive(data_stat, file_name)
+    # update access : 
+    flow_update_files_access(parent_folder_id="1ppBW9GScazZOT53jzcx9g5Qsc4lU_pbr", emails=["carmelo.mileto@gmail.com", "wolf.bank@gmail.com", "wolfbank@gmail.com", "rmateus90@gmail.com"])
         
 
 if __name__ == "__main__":
