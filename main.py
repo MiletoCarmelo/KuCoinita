@@ -159,8 +159,6 @@ def generate_statistics(df, mean_lower_than = 100000, pic_max_1 = 400000, pic_ma
     # calcul diff vol at day i and mean vol last year
     df = df.merge(groupedVol1Y, on="ticker", how="left")
     df["VolumeDeltaMean1Y"] = df["volume"] - df["meanVolume1Year"]
-    # is mean overall under cumstum  
-    grouped['HasVolumeMean1YearUnder' + str(mean_lower_than)] = grouped['meanVolume1Year'] < mean_lower_than
     # Calculate number of days higher than custum pic_max_1
     days_above_custum = pd.DataFrame(df[df['volume'] > pic_max_1].groupby('ticker')['volume'].agg(['count', 'mean']))
     days_above_custum = days_above_custum.rename(columns={'count': 'NbDaysForVolumePicsHigherThan' + str(pic_max_1), 'mean': 'MeanVolume1YearPicsHigherThan' + str(pic_max_1)})
@@ -182,10 +180,8 @@ def generate_statistics(df, mean_lower_than = 100000, pic_max_1 = 400000, pic_ma
     stat24h['SnipePrice24Hours'] = stat24h['high'] - stat24h['lastPrice']
     # calcul the diff price betwenn High and lastPrice = highestSnipePrice
     stat24h['SnipePriceVariation24Hours'] = (stat24h['high'] - stat24h['lastPrice'])/(stat24h['high'])
-    # is mean 24 h volme under cumstum  
-    stat24h['HasVolumeMean24HoursUnder' + str(mean_lower_than)] = stat24h['meanVolume24Hours'] < mean_lower_than
     # left join 
-    grouped = grouped.merge(stat24h[["ticker", "SnipePriceVariation24Hours",'HasVolumeMean24HoursUnder' + str(mean_lower_than)]], on="ticker",how="left")
+    grouped = grouped.merge(stat24h[["ticker", "SnipePriceVariation24Hours"]], on="ticker",how="left")
     return grouped
 
 
@@ -198,6 +194,7 @@ def flow_kucoin_candlesticks_update_to_yesterday(type="1day",from_date_str="2021
     tickers = tickers.loc[tickers["quoteCurrency"] == "USDT"]
     # filter not having 3S, 3L, 2S, 2L
     tickers = tickers.loc[~tickers["symbol"].str.contains("3S|3L|2S|2L")]
+    tickers = tickers.loc[~tickers["symbol"].str.contains("DOWN-|UP-")]
     # to list
     tickers = tickers["symbol"].to_list()
     # generate data
@@ -232,7 +229,7 @@ def flow_kucoin_candlesticks_update_to_yesterday(type="1day",from_date_str="2021
     # flow_update_files_access(parent_folder_id="1ppBW9GScazZOT53jzcx9g5Qsc4lU_pbr", emails=["carmelo.mileto@gmail.com", "wolf.bank@gmail.com", "wolfbank@gmail.com", "rmateus90@gmail.com"])
         
 
-# if __name__ == "__main__":
-#    flow_kucoin_candlesticks_update_to_yesterday()
+if __name__ == "__main__":
+    flow_kucoin_candlesticks_update_to_yesterday()
 
     
