@@ -193,6 +193,7 @@ def generate_statistics(df, mean_lower_than = 100000, pic_max_1 = 400000, pic_ma
 def flow_kucoin_candlesticks_update_to_yesterday(type="1day",from_date_str="2021-01-01", to_date_str=datetime.now().date().strftime("%Y-%m-%d"), max_mean = 15000, min_peak_1=400000, min_peak_2=600000):
     # get ticker list 
     tickers = ku.get_tickers_list()
+    print("tickers : done")
     # filter quotCurrency == "USDT"
     tickers = tickers.loc[tickers["quoteCurrency"] == "USDT"]
     # filter not having 3S, 3L, 2S, 2L
@@ -201,10 +202,12 @@ def flow_kucoin_candlesticks_update_to_yesterday(type="1day",from_date_str="2021
     tickers = tickers["symbol"].to_list()
     # generate data
     data = ku.get_daily_candlesticks(tickers=tickers, type=type, from_date=from_date_str, to_date=to_date_str)
+    print("data : done")
         # sort_values datetimeutc ticker 
     data = data.sort_values(['datetimeutc', 'ticker'])
     # generate data for ric : 
     data_ric = generate_file_for_ricardo(data)  
+    print("data ric : done")
         # replace all NaN by 0 : 
     data_ric = data_ric.fillna(0.0)
     file_name = "kucoin_volume.xlsx"
